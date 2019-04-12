@@ -1,4 +1,4 @@
-# Strong Person ReID Baseline
+# Person ReID Library
 The architecture follows the NTU ROSE ReID Project guide line [Person_ReID_Baseline](https://github.com/LinShanify/Person_ReID_Baseline). Some of codes are copy from L1aoXingyu's [reid_baseline](https://github.com/L1aoXingyu/reid_baseline).
 
 * `ResNet50 Last Stride 1` from huanghoujing's [triplet baseline](https://github.com/huanghoujing/person-reid-triplet-loss-baseline) 
