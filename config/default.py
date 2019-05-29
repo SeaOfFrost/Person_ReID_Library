@@ -8,6 +8,7 @@ _C = CN()
 _C.MODEL = CN()
 _C.MODEL.NAME = 'ResNet50'
 _C.MODEL.LAST_STRIDE = 2
+
 # -----------------------------------------------------------------------------
 # INPUT
 # -----------------------------------------------------------------------------
@@ -42,18 +43,18 @@ _C.DATASETS = CN()
 _C.DATASETS.NAMES = ('Market1501')
 # Setup storage directroy for dataset
 # _C.DATASETS.STORE_DIR = ('./datasets')
-_C.DATASETS.STORE_DIR = ('../mfsNetwork/Datasets')
+_C.DATASETS.STORE_DIR = '../mfsNetwork/Datasets'
 
 # -----------------------------------------------------------------------------
 # DataLoader
 # -----------------------------------------------------------------------------
 _C.DATALOADER = CN()
 # Number of data loading threads
-_C.DATALOADER.NUM_WORKERS = 8
+_C.DATALOADER.NUM_WORKERS = 4
 # Sampler for data loading
 _C.DATALOADER.SAMPLER = 'softmax'
 # Number of instance for one batch
-_C.DATALOADER.NUM_INSTANCE = 16
+_C.DATALOADER.NUM_INSTANCE = 32
 
 # ---------------------------------------------------------------------------- #
 # Solver

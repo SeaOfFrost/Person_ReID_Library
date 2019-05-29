@@ -15,7 +15,7 @@ from logger import make_logger
 from evaluation import evaluation
 from datasets import PersonReID_Dataset_Downloader
 from utils import check_jupyter_run
-if check_jupyter_run():
+if  check_jupyter_run():
     from tqdm import tqdm_notebook as tqdm
 else:
     from tqdm import tqdm

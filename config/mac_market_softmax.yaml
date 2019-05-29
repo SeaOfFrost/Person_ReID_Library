@@ -1,6 +1,6 @@
 MODEL:
   NAME: 'ResNet50'
-  
+
 INPUT:
   SIZE_TRAIN: [384, 128]
   SIZE_TEST: [384, 128]
@@ -8,11 +8,11 @@ INPUT:
   PADDING: 10
 
 DATASETS:
-  NAMES: ('NTUCampus')
+  NAMES: ('Market1501')
+  STORE_DIR: '/Users/linshan/Pictures/Person_ReID_Datasets'
 
 DATALOADER:
-  SAMPLER: 'softmax_triplet'
-  NUM_INSTANCE: 4
+  SAMPLER: 'softmax'
   NUM_WORKERS: 8
 
 SOLVER:
@@ -34,10 +34,10 @@ SOLVER:
   WARMUP_METHOD: 'linear'
 
   CHECKPOINT_PERIOD: 20
-  EVAL_PERIOD: 10
+  EVAL_PERIOD: 20
 
 TEST:
   IMS_PER_BATCH: 256
 
-OUTPUT_DIR: "./checkpoint/NTUCampus/Softmax_Triplet_S1_BS64"
-DEVICE: "cuda:4"
+OUTPUT_DIR: "./checkpoint/Market1501/Softmax_S1_BS64"
+DEVICE: "cpu"

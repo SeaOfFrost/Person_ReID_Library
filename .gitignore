@@ -127,3 +127,4 @@ ResNet50_epo80.pth
 ResNet50_epo60.pth
 ResNet50_epo40.pth
 ResNet50_epo20.pth
+.vscode/settings.json
