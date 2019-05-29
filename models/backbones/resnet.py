@@ -1,5 +1,5 @@
-import torch.nn as nn
 import math
+import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
@@ -93,7 +93,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-  def __init__(self, block, layers, last_conv_stride=2):
+  def __init__(self, block, layers, last_stride=2):
 
     self.inplanes = 64
     super(ResNet, self).__init__()
@@ -106,7 +106,7 @@ class ResNet(nn.Module):
     self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
     self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
     self.layer4 = self._make_layer(
-      block, 512, layers[3], stride=last_conv_stride)
+      block, 512, layers[3], stride=last_stride)
 
     for m in self.modules():
       if isinstance(m, nn.Conv2d):

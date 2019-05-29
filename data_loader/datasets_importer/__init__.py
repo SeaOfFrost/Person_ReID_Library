@@ -11,7 +11,6 @@ __factory = {
     'Market1501': Market1501,
     'DukeMTMC': DukeMTMC,
     'MSMT17': MSMT17,
-    'NTUCampus': NTUCampus,
 }
 
 
