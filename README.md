@@ -30,6 +30,16 @@ Currently support:
 * [DukeMTMC](https://github.com/layumi/DukeMTMC-reID_evaluation)
 * [MSMT17](https://www.pkuvmc.com/publications/msmt17.html)
 
+## Backbone Networks
+| __ResNet__ | __SENet__ |
+|-----------|---------------------|
+| ResNet18 | SENet154 |
+| ResNet32 | SE_ResNet50 |
+| ResNet50 | SE_ResNet101 |
+| ResNet101 | SE_ResNet152 |
+| ResNet152 | SE_ResNext50_32x4d |
+| --- | SE_ResNext101_32x4d |
+
 ## Training:
 * As the last feature maps increase. Batch Size 128 will use more than 12G
 * Batch Size 64 use around 10G GPU memory
