@@ -38,7 +38,7 @@ Currently support:
 | ResNet50 | SE_ResNet101 |
 | ResNet101 | SE_ResNet152 |
 | ResNet152 | SE_ResNext50_32x4d |
-| --- | SE_ResNext101_32x4d |
+| MGN(ResNet50) | SE_ResNext101_32x4d |
 
 ## Training:
 * As the last feature maps increase. Batch Size 128 will use more than 12G
