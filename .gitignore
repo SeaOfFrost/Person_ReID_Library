@@ -123,3 +123,4 @@ nohup2.out
 
 *.pth
 .vscode/settings.json
+*.txt
