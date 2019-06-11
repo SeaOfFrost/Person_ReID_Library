@@ -5,20 +5,6 @@ from torchvision import models
 from torchvision.models.resnet import Bottleneck
 from .BasicModule import BasicModule
 from .backbones.resnet import resnet50
-
-# def _init_reduction(reduction):
-#     # conv
-#     nn.init.kaiming_normal_(reduction[0].weight, mode='fan_in')
-#     # nn.init.constant_(reduction[0].bias, 0.)
-
-#     # bn
-#     nn.init.normal_(reduction[1].weight, mean=1., std=0.02)
-#     nn.init.constant_(reduction[1].bias, 0.)
-
-# def _init_fc(fc):
-#     nn.init.kaiming_normal_(fc.weight, mode='fan_out')
-#     # nn.init.normal_(fc.weight, std=0.001)
-#     nn.init.constant_(fc.bias, 0.)
         
 class MGN(BasicModule):
     feats = 256
@@ -82,16 +68,6 @@ class MGN(BasicModule):
         self._init_fc(self.fc_id_256_2_0)
         self._init_fc(self.fc_id_256_2_1)
         self._init_fc(self.fc_id_256_2_2)
-
-#         self.fc_id_2048_0.apply(_init_fc)
-#         self.fc_id_2048_1.apply(_init_fc)
-#         self.fc_id_2048_2.apply(_init_fc)
-
-#         self.fc_id_256_1_0.apply(_init_fc)
-#         self.fc_id_256_1_1.apply(_init_fc)
-#         self.fc_id_256_2_0.apply(_init_fc)
-#         self.fc_id_256_2_1.apply(_init_fc)
-#         self.fc_id_256_2_2.apply(_init_fc)
         
     @staticmethod
     def _init_reduction(reduction):
@@ -149,6 +125,11 @@ class MGN(BasicModule):
         l1_p3 = self.fc_id_256_2_1(f1_p3)
         l2_p3 = self.fc_id_256_2_2(f2_p3)
 
-        predict = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
+        feat = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
 
-        return predict, fg_p1, fg_p2, fg_p3, l_p1, l_p2, l_p3, l0_p2, l1_p2, l0_p3, l1_p3, l2_p3
+        if self.training:
+            cls_score = l_p1, l_p2, l_p3, l0_p2, l1_p2, l0_p3, l1_p3, l2_p3
+            global_feat = fg_p1, fg_p2, fg_p3
+            return cls_score, global_feat  # global feature for triplet loss
+        else:
+            return feat

@@ -70,25 +70,17 @@ def train(config_file, **kwargs):
 
             optimizer.zero_grad()
 
+            scores, feats = model(images)
+            loss = loss_fn(scores, feats, labels)
+
+            loss.backward()
+            optimizer.step()
+
+            count = count + 1
+            running_loss += loss.item()
             if cfg.MODEL.NAME == 'MGN':
-                outputs = model(images)
-                loss = loss_fn(outputs, labels)
-
-                loss.backward()
-                optimizer.step()
-
-                count = count + 1
-                running_loss += loss.item()
-                running_acc += (outputs[4].max(1)[1] == labels).float().mean().item()
+                running_acc += (scores[0].max(1)[1] == labels).float().mean().item()
             else:
-                scores, feats = model(images)
-                loss = loss_fn(scores, feats, labels)
-
-                loss.backward()
-                optimizer.step()
-
-                count = count + 1
-                running_loss += loss.item()
                 running_acc += (scores.max(1)[1] == labels).float().mean().item()
 
             
