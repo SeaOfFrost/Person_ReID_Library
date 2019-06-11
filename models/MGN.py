@@ -5,12 +5,27 @@ from torchvision import models
 from torchvision.models.resnet import Bottleneck
 from .BasicModule import BasicModule
 from .backbones.resnet import resnet50
+
+# def _init_reduction(reduction):
+#     # conv
+#     nn.init.kaiming_normal_(reduction[0].weight, mode='fan_in')
+#     # nn.init.constant_(reduction[0].bias, 0.)
+
+#     # bn
+#     nn.init.normal_(reduction[1].weight, mean=1., std=0.02)
+#     nn.init.constant_(reduction[1].bias, 0.)
+
+# def _init_fc(fc):
+#     nn.init.kaiming_normal_(fc.weight, mode='fan_out')
+#     # nn.init.normal_(fc.weight, std=0.001)
+#     nn.init.constant_(fc.bias, 0.)
         
-class MGN(BasicModule):
+class MGN2(BasicModule):
     feats = 256
+    n_feats = 2048
     def __init__(self, num_classes, last_stride):
-        super(MGN, self).__init__()
-        self.model_name = 'MGN'
+        super(MGN2, self).__init__()
+        self.model_name = 'MGN2'
         self.download = models.resnet50(pretrained=True)
         self.base = resnet50(pretrained=True, last_stride=last_stride)
         
@@ -49,9 +64,9 @@ class MGN(BasicModule):
         self._init_reduction(self.reduction)
 #         self.reduction.apply(_init_reduction)
 
-        self.fc_id_2048_0 = nn.Linear(self.feats, num_classes)
-        self.fc_id_2048_1 = nn.Linear(self.feats, num_classes)
-        self.fc_id_2048_2 = nn.Linear(self.feats, num_classes)
+        self.fc_id_2048_0 = nn.Linear(self.n_feats, num_classes)
+        self.fc_id_2048_1 = nn.Linear(self.n_feats, num_classes)
+        self.fc_id_2048_2 = nn.Linear(self.n_feats, num_classes)
 
         self.fc_id_256_1_0 = nn.Linear(self.feats, num_classes)
         self.fc_id_256_1_1 = nn.Linear(self.feats, num_classes)
@@ -68,6 +83,16 @@ class MGN(BasicModule):
         self._init_fc(self.fc_id_256_2_0)
         self._init_fc(self.fc_id_256_2_1)
         self._init_fc(self.fc_id_256_2_2)
+
+#         self.fc_id_2048_0.apply(_init_fc)
+#         self.fc_id_2048_1.apply(_init_fc)
+#         self.fc_id_2048_2.apply(_init_fc)
+
+#         self.fc_id_256_1_0.apply(_init_fc)
+#         self.fc_id_256_1_1.apply(_init_fc)
+#         self.fc_id_256_2_0.apply(_init_fc)
+#         self.fc_id_256_2_1.apply(_init_fc)
+#         self.fc_id_256_2_2.apply(_init_fc)
         
     @staticmethod
     def _init_reduction(reduction):
@@ -105,7 +130,8 @@ class MGN(BasicModule):
         z0_p3 = zp3[:, :, 0:1, :]
         z1_p3 = zp3[:, :, 1:2, :]
         z2_p3 = zp3[:, :, 2:3, :]
-
+        
+        # Conv1x1 Reduction
         fg_p1 = self.reduction(zg_p1).squeeze(dim=3).squeeze(dim=2)
         fg_p2 = self.reduction(zg_p2).squeeze(dim=3).squeeze(dim=2)
         fg_p3 = self.reduction(zg_p3).squeeze(dim=3).squeeze(dim=2)
@@ -114,22 +140,38 @@ class MGN(BasicModule):
         f0_p3 = self.reduction(z0_p3).squeeze(dim=3).squeeze(dim=2)
         f1_p3 = self.reduction(z1_p3).squeeze(dim=3).squeeze(dim=2)
         f2_p3 = self.reduction(z2_p3).squeeze(dim=3).squeeze(dim=2)
-
-        l_p1 = self.fc_id_2048_0(fg_p1)
-        l_p2 = self.fc_id_2048_1(fg_p2)
-        l_p3 = self.fc_id_2048_2(fg_p3)
+        
+        # Flatten for Softmax_2048 //zg_p1 == ([batch_size, 2048, 1, 1])
+        fc_2048_0 = zg_p1.view(zg_p1.shape[0], -1) 
+        fc_2048_1 = zg_p2.view(zg_p2.shape[0], -1) 
+        fc_2048_2 = zg_p3.view(zg_p3.shape[0], -1) 
+        
+        l_p1 = self.fc_id_2048_0(fc_2048_0)
+        l_p2 = self.fc_id_2048_1(fc_2048_1)
+        l_p3 = self.fc_id_2048_2(fc_2048_2)
 
         l0_p2 = self.fc_id_256_1_0(f0_p2)
         l1_p2 = self.fc_id_256_1_1(f1_p2)
         l0_p3 = self.fc_id_256_2_0(f0_p3)
         l1_p3 = self.fc_id_256_2_1(f1_p3)
-        l2_p3 = self.fc_id_256_2_2(f2_p3)
-
-        feat = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
-
+        l2_p3 = self.fc_id_256_2_2(f2_p3)  
+               
         if self.training:
             cls_score = l_p1, l_p2, l_p3, l0_p2, l1_p2, l0_p3, l1_p3, l2_p3
             global_feat = fg_p1, fg_p2, fg_p3
             return cls_score, global_feat  # global feature for triplet loss
         else:
+            #Concatenate all features and return
+            feat = torch.cat([fc_2048_0, fc_2048_1, f0_p2, f1_p2, fc_2048_2,  f0_p3, f1_p3, f2_p3], dim=1)
             return feat
+        
+        '''
+        predict = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
+        if self.training:
+            return predict, fg_p1, fg_p2, fg_p3, l_p1, l_p2, l_p3, l0_p2, l1_p2, l0_p3, l1_p3, l2_p3
+        else:
+            #Concatenate all features and return
+            feat = torch.cat([fc_2048_0, fc_2048_1, f0_p2, f1_p2, fc_2048_2,  f0_p3, f1_p3, f2_p3], dim=1)
+            #test = torch.cat([l_p1, l_p2, l0_p2, l1_p2, l_p3, l0_p3, l1_p3, l2_p3], dim=1)
+            return feat
+        '''
