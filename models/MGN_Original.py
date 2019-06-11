@@ -6,20 +6,31 @@ from torchvision.models.resnet import Bottleneck
 from .BasicModule import BasicModule
 from .backbones.resnet import resnet50
 
-# def _init_reduction(reduction):
-#     # conv
-#     nn.init.kaiming_normal_(reduction[0].weight, mode='fan_in')
-#     # nn.init.constant_(reduction[0].bias, 0.)
 
-#     # bn
-#     nn.init.normal_(reduction[1].weight, mean=1., std=0.02)
-#     nn.init.constant_(reduction[1].bias, 0.)
 
-# def _init_fc(fc):
-#     nn.init.kaiming_normal_(fc.weight, mode='fan_out')
-#     # nn.init.normal_(fc.weight, std=0.001)
-#     nn.init.constant_(fc.bias, 0.)
+def weights_init_kaiming(m):
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        nn.init.kaiming_normal_(m.weight, a=0, mode='fan_out')
+        nn.init.constant_(m.bias, 0.0)
+    elif classname.find('Conv') != -1:
+        nn.init.kaiming_normal_(m.weight, a=0, mode='fan_in')
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0.0)
+    elif classname.find('BatchNorm') != -1:
+        if m.affine:
+            nn.init.constant_(m.weight, 1.0)
+            nn.init.constant_(m.bias, 0.0)
+
+
+def weights_init_classifier(m):
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        nn.init.normal_(m.weight, std=0.001)
+        if m.bias:
+            nn.init.constant_(m.bias, 0.0)
         
+
 class MGN(BasicModule):
     feats = 256
     def __init__(self, num_classes, last_stride):
@@ -61,7 +72,6 @@ class MGN(BasicModule):
         self.reduction = nn.Sequential(nn.Conv2d(2048, self.feats, 1, bias=False), nn.BatchNorm2d(self.feats), nn.ReLU())
 
         self._init_reduction(self.reduction)
-#         self.reduction.apply(_init_reduction)
 
         self.fc_id_2048_0 = nn.Linear(self.feats, num_classes)
         self.fc_id_2048_1 = nn.Linear(self.feats, num_classes)
@@ -83,15 +93,15 @@ class MGN(BasicModule):
         self._init_fc(self.fc_id_256_2_1)
         self._init_fc(self.fc_id_256_2_2)
 
-#         self.fc_id_2048_0.apply(_init_fc)
-#         self.fc_id_2048_1.apply(_init_fc)
-#         self.fc_id_2048_2.apply(_init_fc)
+        # self.gap = nn.AdaptiveAvgPool2d(1)
 
-#         self.fc_id_256_1_0.apply(_init_fc)
-#         self.fc_id_256_1_1.apply(_init_fc)
-#         self.fc_id_256_2_0.apply(_init_fc)
-#         self.fc_id_256_2_1.apply(_init_fc)
-#         self.fc_id_256_2_2.apply(_init_fc)
+        self.bottleneck = nn.BatchNorm1d(2048)
+        self.bottleneck.bias.requires_grad_(False)  # no shift
+        self.classifier = nn.Linear(2048, num_classes, bias=False)
+
+        self.bottleneck.apply(weights_init_kaiming)
+        self.classifier.apply(weights_init_classifier)
+
         
     @staticmethod
     def _init_reduction(reduction):
@@ -149,6 +159,12 @@ class MGN(BasicModule):
         l1_p3 = self.fc_id_256_2_1(f1_p3)
         l2_p3 = self.fc_id_256_2_2(f2_p3)
 
-        predict = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
+        global_feat = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
 
-        return predict, fg_p1, fg_p2, fg_p3, l_p1, l_p2, l_p3, l0_p2, l1_p2, l0_p3, l1_p3, l2_p3
+        feat = self.bottleneck(global_feat)
+
+        if self.training:
+            cls_score = self.classifier(feat)
+            return cls_score, global_feat  # global feature for triplet loss
+        else:
+            return feat
