@@ -70,19 +70,6 @@ def train(config_file, **kwargs):
 
             optimizer.zero_grad()
 
-            # Change MGN calculation method =》 Same as other methods
-            
-            # if cfg.MODEL.NAME == 'MGN':
-            #     scores, feats = model(images)
-            #     loss = loss_fn(outputs, labels)
-
-            #     loss.backward()
-            #     optimizer.step()
-
-            #     count = count + 1
-            #     running_loss += loss.item()
-            #     running_acc += (outputs[4].max(1)[1] == labels).float().mean().item()
-            # else:
             scores, feats = model(images)
             loss = loss_fn(scores, feats, labels)
 
@@ -91,7 +78,10 @@ def train(config_file, **kwargs):
 
             count = count + 1
             running_loss += loss.item()
-            running_acc += (scores.max(1)[1] == labels).float().mean().item()
+            if cfg.MODEL.NAME == 'MGN':
+                running_acc += (scores[0].max(1)[1] == labels).float().mean().item()
+            else:
+                running_acc += (scores.max(1)[1] == labels).float().mean().item()
 
             
         logger.info("Epoch[{}] Iteration[{}/{}] Loss: {:.3f}, Acc: {:.3f}, Base Lr: {:.2e}"

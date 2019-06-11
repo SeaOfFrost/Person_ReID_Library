@@ -12,5 +12,5 @@ from .SE_ResNet152 import SE_ResNet152
 from .SENet154 import SENet154
 
 from .MGN import MGN
-from .CAP import CAP
-from .SE50CAP import SE50CAP
+# from .CAP import CAP
+# from .SE50CAP import SE50CAP
