@@ -142,9 +142,9 @@ class MGN2(BasicModule):
         f2_p3 = self.reduction(z2_p3).squeeze(dim=3).squeeze(dim=2)
         
         # Flatten for Softmax_2048 //zg_p1 == ([batch_size, 2048, 1, 1])
-        fc_2048_0 = zg_p1.view(zg_p1.shape[0], -1) 
-        fc_2048_1 = zg_p2.view(zg_p2.shape[0], -1) 
-        fc_2048_2 = zg_p3.view(zg_p3.shape[0], -1) 
+        fc_2048_0 = zg_p1.squeeze(dim=3).squeeze(dim=2)
+        fc_2048_1 = zg_p2.squeeze(dim=3).squeeze(dim=2)
+        fc_2048_2 = zg_p3.squeeze(dim=3).squeeze(dim=2)
         
         l_p1 = self.fc_id_2048_0(fc_2048_0)
         l_p2 = self.fc_id_2048_1(fc_2048_1)
@@ -164,14 +164,3 @@ class MGN2(BasicModule):
             #Concatenate all features and return
             feat = torch.cat([fc_2048_0, fc_2048_1, f0_p2, f1_p2, fc_2048_2,  f0_p3, f1_p3, f2_p3], dim=1)
             return feat
-        
-        '''
-        predict = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
-        if self.training:
-            return predict, fg_p1, fg_p2, fg_p3, l_p1, l_p2, l_p3, l0_p2, l1_p2, l0_p3, l1_p3, l2_p3
-        else:
-            #Concatenate all features and return
-            feat = torch.cat([fc_2048_0, fc_2048_1, f0_p2, f1_p2, fc_2048_2,  f0_p3, f1_p3, f2_p3], dim=1)
-            #test = torch.cat([l_p1, l_p2, l0_p2, l1_p2, l_p3, l0_p3, l1_p3, l2_p3], dim=1)
-            return feat
-        '''
